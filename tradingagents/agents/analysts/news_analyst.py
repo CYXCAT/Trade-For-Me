@@ -3,6 +3,7 @@ import time
 import json
 from tradingagents.agents.utils.agent_utils import get_news, get_global_news
 from tradingagents.dataflows.config import get_config
+from tradingagents.default_config import LLM_OUTPUT_SIMPLIFIED_CHINESE_DIRECTIVE
 
 
 def create_news_analyst(llm):
@@ -31,7 +32,8 @@ def create_news_analyst(llm):
                     " If you or any other assistant has the FINAL TRANSACTION PROPOSAL: **BUY/HOLD/SELL** or deliverable,"
                     " prefix your response with FINAL TRANSACTION PROPOSAL: **BUY/HOLD/SELL** so the team knows to stop."
                     " You have access to the following tools: {tool_names}.\n{system_message}"
-                    "For your reference, the current date is {current_date}. We are looking at the company {ticker}",
+                    "For your reference, the current date is {current_date}. We are looking at the company {ticker}"
+                    + LLM_OUTPUT_SIMPLIFIED_CHINESE_DIRECTIVE,
                 ),
                 MessagesPlaceholder(variable_name="messages"),
             ]

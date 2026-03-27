@@ -1,6 +1,8 @@
 import time
 import json
 
+from tradingagents.default_config import LLM_OUTPUT_SIMPLIFIED_CHINESE_DIRECTIVE
+
 
 def create_research_manager(llm, memory):
     def research_manager_node(state) -> dict:
@@ -19,7 +21,8 @@ def create_research_manager(llm, memory):
         for i, rec in enumerate(past_memories, 1):
             past_memory_str += rec["recommendation"] + "\n\n"
 
-        prompt = f"""As the portfolio manager and debate facilitator, your role is to critically evaluate this round of debate and make a definitive decision: align with the bear analyst, the bull analyst, or choose Hold only if it is strongly justified based on the arguments presented.
+        prompt = (
+            f"""As the portfolio manager and debate facilitator, your role is to critically evaluate this round of debate and make a definitive decision: align with the bear analyst, the bull analyst, or choose Hold only if it is strongly justified based on the arguments presented.
 
 Summarize the key points from both sides concisely, focusing on the most compelling evidence or reasoning. Your recommendation—Buy, Sell, or Hold—must be clear and actionable. Avoid defaulting to Hold simply because both sides have valid points; commit to a stance grounded in the debate's strongest arguments.
 
@@ -36,6 +39,9 @@ Here are your past reflections on mistakes:
 Here is the debate:
 Debate History:
 {history}"""
+            + LLM_OUTPUT_SIMPLIFIED_CHINESE_DIRECTIVE
+        )
+
         response = llm.invoke(prompt)
 
         new_investment_debate_state = {

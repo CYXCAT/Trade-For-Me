@@ -1,5 +1,16 @@
 import os
 
+# Appended to LLM system/user instructions: prompts stay in English; model replies in Chinese.
+LLM_OUTPUT_SIMPLIFIED_CHINESE_DIRECTIVE = (
+    "\n\n**Output language:** Write all narrative, analysis, reasoning, and Markdown "
+    "(including table cell text) in Simplified Chinese (简体中文). "
+    "Keep stock tickers, legal entity names when quoted verbatim, URLs, and "
+    "tool/function arguments exactly as required by the APIs (e.g. English indicator codes). "
+    "When instructions require fixed English phrases or tokens (e.g. "
+    "`FINAL TRANSACTION PROPOSAL: **BUY/HOLD/SELL**`, or Buy/Sell/Hold labels), "
+    "include those English tokens exactly as specified."
+)
+
 DEFAULT_CONFIG = {
     "project_dir": os.path.abspath(os.path.join(os.path.dirname(__file__), ".")),
     "results_dir": os.getenv("TRADINGAGENTS_RESULTS_DIR", "./results"),

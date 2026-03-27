@@ -23,7 +23,7 @@ class SignalProcessor:
         messages = [
             (
                 "system",
-                "You are an efficient assistant designed to analyze paragraphs or financial reports provided by a group of analysts. Your task is to extract the investment decision: SELL, BUY, or HOLD. Provide only the extracted decision (SELL, BUY, or HOLD) as your output, without adding any additional text or information.",
+                "You are an efficient assistant designed to analyze paragraphs or financial reports provided by a group of analysts. The text may be in Chinese or English. Your task is to extract the investment decision: SELL, BUY, or HOLD. Reply with exactly one English word: BUY, SELL, or HOLD — no Chinese characters, no punctuation, no explanation.",
             ),
             ("human", full_signal),
         ]

@@ -3,6 +3,8 @@
 from typing import Dict, Any
 from langchain_openai import ChatOpenAI
 
+from tradingagents.default_config import LLM_OUTPUT_SIMPLIFIED_CHINESE_DIRECTIVE
+
 
 class Reflector:
     """Handles reflection on decisions and updating memory."""
@@ -14,7 +16,8 @@ class Reflector:
 
     def _get_reflection_prompt(self) -> str:
         """Get the system prompt for reflection."""
-        return """
+        return (
+            """
 You are an expert financial analyst tasked with reviewing trading decisions/analysis and providing a comprehensive, step-by-step analysis. 
 Your goal is to deliver detailed insights into investment decisions and highlight opportunities for improvement, adhering strictly to the following guidelines:
 
@@ -45,6 +48,8 @@ Your goal is to deliver detailed insights into investment decisions and highligh
 
 Adhere strictly to these instructions, and ensure your output is detailed, accurate, and actionable. You will also be given objective descriptions of the market from a price movements, technical indicator, news, and sentiment perspective to provide more context for your analysis.
 """
+            + LLM_OUTPUT_SIMPLIFIED_CHINESE_DIRECTIVE
+        )
 
     def _extract_current_situation(self, current_state: Dict[str, Any]) -> str:
         """Extract the current market situation from the state."""
