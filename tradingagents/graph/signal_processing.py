@@ -18,12 +18,15 @@ class SignalProcessor:
             full_signal: Complete trading signal text
 
         Returns:
-            Extracted decision (BUY, SELL, or HOLD)
+            Extracted rating (BUY, OVERWEIGHT, HOLD, UNDERWEIGHT, or SELL)
         """
         messages = [
             (
                 "system",
-                "You are an efficient assistant designed to analyze paragraphs or financial reports provided by a group of analysts. The text may be in Chinese or English. Your task is to extract the investment decision: SELL, BUY, or HOLD. Reply with exactly one English word: BUY, SELL, or HOLD — no Chinese characters, no punctuation, no explanation.",
+                "You are an efficient assistant designed to analyze paragraphs or financial reports from analysts. "
+                "The text may be in Chinese or English. Extract the rating as exactly one of: "
+                "BUY, OVERWEIGHT, HOLD, UNDERWEIGHT, SELL. "
+                "Reply with exactly one English word — the rating only; no Chinese characters, no punctuation, no explanation.",
             ),
             ("human", full_signal),
         ]

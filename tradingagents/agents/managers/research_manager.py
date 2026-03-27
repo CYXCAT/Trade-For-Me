@@ -1,11 +1,13 @@
 import time
 import json
 
+from tradingagents.agents.utils.agent_utils import build_instrument_context
 from tradingagents.default_config import LLM_OUTPUT_SIMPLIFIED_CHINESE_DIRECTIVE
 
 
 def create_research_manager(llm, memory):
     def research_manager_node(state) -> dict:
+        instrument_context = build_instrument_context(state["company_of_interest"])
         history = state["investment_debate_state"].get("history", "")
         market_research_report = state["market_report"]
         sentiment_report = state["sentiment_report"]
@@ -35,6 +37,8 @@ Take into account your past mistakes on similar situations. Use these insights t
 
 Here are your past reflections on mistakes:
 \"{past_memory_str}\"
+
+{instrument_context}
 
 Here is the debate:
 Debate History:
