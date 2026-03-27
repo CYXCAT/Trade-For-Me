@@ -8,12 +8,23 @@ from cli.models import AnalystType
 console = Console()
 
 TICKER_INPUT_EXAMPLES = "Examples: SPY, CNC.TO, 7203.T, 0700.HK"
+CUSTOM_MODEL_VALUE = "__custom_model_id__"
 
 ANALYST_ORDER = [
     ("Market Analyst", AnalystType.MARKET),
     ("Social Media Analyst", AnalystType.SOCIAL),
     ("News Analyst", AnalystType.NEWS),
     ("Fundamentals Analyst", AnalystType.FUNDAMENTALS),
+]
+
+SILICONFLOW_MODEL_PRESETS = [
+    ("DeepSeek V3.2", "deepseek-ai/DeepSeek-V3.2"),
+    ("Qwen3.5 4B", "Qwen/Qwen3.5-4B"),
+    ("Qwen3.5 9B", "Qwen/Qwen3.5-9B"),
+    ("DeepSeek R1", "deepseek-ai/DeepSeek-R1"),
+    ("Step 3.5 Flash", "stepfun-ai/Step-3.5-Flash"),
+    ("DeepSeek R1 0528 Qwen3 8B", "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"),
+    ("Qwen3 8B", "Qwen/Qwen3-8B"),
 ]
 
 
@@ -166,6 +177,9 @@ def select_shallow_thinking_agent(provider) -> str:
             ("NVIDIA Nemotron 3 Nano 30B (free)", "nvidia/nemotron-3-nano-30b-a3b:free"),
             ("Z.AI GLM 4.5 Air (free)", "z-ai/glm-4.5-air:free"),
         ],
+        "siliconflow": SILICONFLOW_MODEL_PRESETS + [
+            ("Custom model ID (manual input)", CUSTOM_MODEL_VALUE),
+        ],
         "ollama": [
             ("Qwen3:latest (8B, local)", "qwen3:latest"),
             ("GPT-OSS:latest (20B, local)", "gpt-oss:latest"),
@@ -194,6 +208,22 @@ def select_shallow_thinking_agent(provider) -> str:
             "\n[red]No shallow thinking llm engine selected. Exiting...[/red]"
         )
         exit(1)
+
+    if choice == CUSTOM_MODEL_VALUE:
+        custom_model = questionary.text(
+            "Enter custom model ID:",
+            validate=lambda x: len(x.strip()) > 0 or "Please enter a valid model ID.",
+            style=questionary.Style(
+                [
+                    ("text", "fg:green"),
+                    ("highlighted", "noinherit"),
+                ]
+            ),
+        ).ask()
+        if not custom_model:
+            console.print("\n[red]No custom model ID provided. Exiting...[/red]")
+            exit(1)
+        return custom_model.strip()
 
     return choice
 
@@ -233,6 +263,9 @@ def select_deep_thinking_agent(provider) -> str:
             ("Z.AI GLM 4.5 Air (free)", "z-ai/glm-4.5-air:free"),
             ("NVIDIA Nemotron 3 Nano 30B (free)", "nvidia/nemotron-3-nano-30b-a3b:free"),
         ],
+        "siliconflow": SILICONFLOW_MODEL_PRESETS + [
+            ("Custom model ID (manual input)", CUSTOM_MODEL_VALUE),
+        ],
         "ollama": [
             ("GLM-4.7-Flash:latest (30B, local)", "glm-4.7-flash:latest"),
             ("GPT-OSS:latest (20B, local)", "gpt-oss:latest"),
@@ -260,6 +293,22 @@ def select_deep_thinking_agent(provider) -> str:
         console.print("\n[red]No deep thinking llm engine selected. Exiting...[/red]")
         exit(1)
 
+    if choice == CUSTOM_MODEL_VALUE:
+        custom_model = questionary.text(
+            "Enter custom model ID:",
+            validate=lambda x: len(x.strip()) > 0 or "Please enter a valid model ID.",
+            style=questionary.Style(
+                [
+                    ("text", "fg:green"),
+                    ("highlighted", "noinherit"),
+                ]
+            ),
+        ).ask()
+        if not custom_model:
+            console.print("\n[red]No custom model ID provided. Exiting...[/red]")
+            exit(1)
+        return custom_model.strip()
+
     return choice
 
 def select_llm_provider() -> tuple[str, str]:
@@ -271,6 +320,7 @@ def select_llm_provider() -> tuple[str, str]:
         ("Anthropic", "https://api.anthropic.com/"),
         ("xAI", "https://api.x.ai/v1"),
         ("Openrouter", "https://openrouter.ai/api/v1"),
+        ("SiliconFlow", "https://api.siliconflow.cn/v1"),
         ("Ollama", "http://localhost:11434/v1"),
     ]
     

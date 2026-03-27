@@ -28,17 +28,18 @@ _PASSTHROUGH_KWARGS = (
 _PROVIDER_CONFIG = {
     "xai": ("https://api.x.ai/v1", "XAI_API_KEY"),
     "openrouter": ("https://openrouter.ai/api/v1", "OPENROUTER_API_KEY"),
+    "siliconflow": ("https://api.siliconflow.cn/v1", "SILICONFLOW_API_KEY"),
     "ollama": ("http://localhost:11434/v1", None),
 }
 
 
 class OpenAIClient(BaseLLMClient):
-    """Client for OpenAI, Ollama, OpenRouter, and xAI providers.
+    """Client for OpenAI-compatible providers.
 
     For native OpenAI models, uses the Responses API (/v1/responses) which
     supports reasoning_effort with function tools across all model families
     (GPT-4.1, GPT-5). Third-party compatible providers (xAI, OpenRouter,
-    Ollama) use standard Chat Completions.
+    SiliconFlow, Ollama) use standard Chat Completions.
     """
 
     def __init__(
@@ -54,15 +55,20 @@ class OpenAIClient(BaseLLMClient):
     def get_llm(self) -> Any:
         """Return configured ChatOpenAI instance."""
         llm_kwargs = {"model": self.model}
+        explicit_api_key = self.kwargs.get("api_key")
 
         # Provider-specific base URL and auth
         if self.provider in _PROVIDER_CONFIG:
             base_url, api_key_env = _PROVIDER_CONFIG[self.provider]
             llm_kwargs["base_url"] = base_url
             if api_key_env:
-                api_key = os.environ.get(api_key_env)
-                if api_key:
-                    llm_kwargs["api_key"] = api_key
+                api_key = explicit_api_key or os.environ.get(api_key_env)
+                if not api_key:
+                    raise ValueError(
+                        f"Missing API key for provider '{self.provider}'. "
+                        f"Set `{api_key_env}` or pass `api_key` explicitly."
+                    )
+                llm_kwargs["api_key"] = api_key
             else:
                 llm_kwargs["api_key"] = "ollama"
         elif self.base_url:
@@ -70,6 +76,9 @@ class OpenAIClient(BaseLLMClient):
 
         # Forward user-provided kwargs
         for key in _PASSTHROUGH_KWARGS:
+            if key == "api_key" and self.provider in _PROVIDER_CONFIG:
+                # Avoid overriding provider-specific key selection above.
+                continue
             if key in self.kwargs:
                 llm_kwargs[key] = self.kwargs[key]
 
