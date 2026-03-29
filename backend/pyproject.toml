@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tradingagents-web-backend"
+version = "0.1.0"
+description = "Web backend for TradingAgents CLI parity"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.116.0",
+  "uvicorn>=0.35.0",
+  "sqlalchemy>=2.0.43",
+  "alembic>=1.16.4",
+  "psycopg[binary]>=3.2.9",
+  "pydantic>=2.11.7",
+  "pydantic-settings>=2.10.1",
+  "python-dotenv>=1.1.1",
+  "sse-starlette>=2.2.1",
+]
+
+[tool.uv]
+dev-dependencies = [
+  "pytest>=8.4.1",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]

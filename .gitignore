@@ -221,3 +221,16 @@ __marimo__/
 .DS_Store
 reports/
 results/
+
+# Frontend / Vite
+frontend/node_modules/
+frontend/.vite/
+frontend/dist/
+
+# Backend local database (SQLAlchemy SQLite)
+tradingagents.db
+tradingagents.db-shm
+tradingagents.db-wal
+backend/tradingagents.db
+backend/tradingagents.db-shm
+backend/tradingagents.db-wal
