@@ -23,9 +23,10 @@ from app.schemas.workflow import (
 )
 from app.services.analysis_runner import run_graph_stream
 from app.services.auth import require_active_user
-from app.services.cli_mapping import WELCOME_MESSAGE, build_workflow_steps
+from app.services.cli_mapping import WELCOME_MESSAGE, build_workflow_steps, workflow_step_chat_pair
 from app.services.conversation_state import (
     append_message,
+    conversation_title_from_state,
     get_state,
     new_conversation_id,
     save_state,
@@ -73,17 +74,8 @@ def list_conversations(
     data: list[ConversationSummary] = []
     for row in rows:
         cid = row.conversation_id
-        first_stmt = (
-            select(Message)
-            .where(Message.conversation_id == cid, Message.role != "tool")
-            .order_by(Message.created_at.asc())
-            .limit(1)
-        )
-        first_msg = db.execute(first_stmt).scalar_one_or_none()
-        title = "New Conversation"
-        if first_msg:
-            content = first_msg.content if isinstance(first_msg.content, str) else json.dumps(first_msg.content)
-            title = content[:40]
+        st = get_state(db, cid)
+        title = conversation_title_from_state(st)
         data.append(ConversationSummary(conversation_id=cid, title=title, updated_at=row.updated_at))
     return data
 
@@ -146,8 +138,11 @@ def submit_step(
     state[payload.step_key] = normalized
     save_state(db, conversation_id, state)
 
-    if payload.step_key not in ("supplemental_prompt",):
-        append_message(db, conversation_id, "user", {"step_key": payload.step_key, "value": normalized})
+    pair = workflow_step_chat_pair(payload.step_key, normalized, state.get("llm_provider"))
+    if pair:
+        assistant_text, user_text = pair
+        append_message(db, conversation_id, "assistant", assistant_text)
+        append_message(db, conversation_id, "user", user_text)
 
     provider = state.get("llm_provider")
     steps = build_workflow_steps(provider=provider)

@@ -20,6 +20,8 @@ const eventLog = ref<string[]>([]);
 const nowTs = ref(Date.now());
 const highlightedMessageIndex = ref<number | null>(null);
 const taskBoard = ref<AgentTask[]>([]);
+const showSidebar = ref(true);
+const showWorkbench = ref(true);
 let timer: number | undefined;
 
 const analystMapping: Record<string, string> = { market: "Market Analyst", social: "Social Analyst", news: "News Analyst", fundamentals: "Fundamentals Analyst" };
@@ -39,6 +41,23 @@ const canRun = computed(() => !!activeConversationId.value && nextStepKey.value 
 const selectedAnalysts = computed(() => (Array.isArray(state.value.analysts) ? (state.value.analysts as string[]) : []));
 const completedCount = computed(() => taskBoard.value.filter((x) => x.status === "completed").length);
 const progressPercent = computed(() => (taskBoard.value.length ? Math.round((completedCount.value / taskBoard.value.length) * 100) : 0));
+const projectItemCount = computed(() => workflowSteps.value.length);
+function titleFromTickerAndDate(s: Record<string, unknown>): string | null {
+  const ticker = String(s.ticker ?? "").trim();
+  const analysisDate = String(s.analysis_date ?? "").trim();
+  if (ticker && analysisDate) return `${ticker} ${analysisDate}`;
+  if (ticker) return ticker;
+  if (analysisDate) return analysisDate;
+  return null;
+}
+
+const activeConversationTitle = computed(() => {
+  const fromState = titleFromTickerAndDate(state.value);
+  if (fromState) return fromState;
+  const c = conversations.value.find((x) => x.conversation_id === activeConversationId.value);
+  const t = c?.title?.trim();
+  return t || "新会话";
+});
 
 function updateState(key: string, value: unknown) {
   state.value = { ...state.value, [key]: value };
@@ -72,6 +91,7 @@ async function submitValue(stepKey: string, value: unknown) {
     nextStepKey.value = wf.next_step_key;
     state.value = wf.state;
     messages.value = await getMessages(activeConversationId.value);
+    await loadConversations();
   } catch (e) {
     errorMessage.value = e instanceof Error ? e.message : "步骤提交失败";
   }
@@ -202,45 +222,129 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="workspace">
-    <section class="chat-panel">
+  <div class="page-root">
+    <header class="conversation-title-bar">
+      <h1 class="conversation-title">{{ activeConversationTitle }}</h1>
+    </header>
+
+    <div class="workspace">
+    <aside v-if="!showSidebar" class="mini-card mini-card-left">
+      <button
+        class="icon-btn"
+        data-tooltip="新建历史记录"
+        aria-label="新建历史记录"
+        @click="createNewConversation"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 5.25v13.5m-6.75-6.75h13.5" />
+        </svg>
+      </button>
+      <button
+        class="icon-btn"
+        data-tooltip="展开历史记录"
+        aria-label="展开历史记录"
+        @click="showSidebar = true"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m9 5.25 7.5 6.75L9 18.75" />
+        </svg>
+      </button>
+    </aside>
+
+    <aside v-if="!showWorkbench" class="mini-card mini-card-right">
+      <button
+        class="icon-btn has-badge"
+        data-tooltip="任务进度"
+        aria-label="任务进度"
+        @click="showWorkbench = true"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3.75 3.75v16.5h16.5M7.5 15l3-3 2.25 2.25L16.5 9" />
+        </svg>
+        <span class="badge">{{ progressPercent }}%</span>
+      </button>
+      <button
+        class="icon-btn has-badge"
+        data-tooltip="项目文件"
+        aria-label="项目文件"
+        @click="showWorkbench = true"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M2.25 6.75A2.25 2.25 0 0 1 4.5 4.5h4.38a2.25 2.25 0 0 1 1.59.66l1.62 1.59a2.25 2.25 0 0 0 1.59.66h5.82a2.25 2.25 0 0 1 2.25 2.25v7.59a2.25 2.25 0 0 1-2.25 2.25H4.5a2.25 2.25 0 0 1-2.25-2.25z" />
+        </svg>
+        <span class="badge">{{ projectItemCount }}</span>
+      </button>
+      <button
+        class="icon-btn"
+        data-tooltip="展开工作台"
+        aria-label="展开工作台"
+        @click="showWorkbench = true"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m15 5.25-7.5 6.75L15 18.75" />
+        </svg>
+      </button>
+    </aside>
+
+    <aside class="floating-panel history-panel" :class="{ open: showSidebar }">
+      <button
+        v-if="showSidebar"
+        class="edge-toggle edge-toggle-left"
+        data-tooltip="收起历史记录"
+        aria-label="收起历史记录"
+        @click="showSidebar = !showSidebar"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m15 5.25-7.5 6.75L15 18.75" />
+        </svg>
+      </button>
+      <div class="panel-bar">
+        <strong>历史记录</strong>
+      </div>
       <ConversationSidebar
         :conversations="conversations"
         :active-conversation-id="activeConversationId"
         @create="createNewConversation"
         @open="openConversation"
       />
+    </aside>
 
-      <main class="dialog-pane">
-        <header class="topbar">
-          <div>
-            <h1>对话区域</h1>
-            <p>您今天想查看关于什么东西的资讯?</p>
-          </div>
-        </header>
+    <aside class="floating-panel workbench-panel" :class="{ open: showWorkbench }">
+      <button
+        v-if="showWorkbench"
+        class="edge-toggle edge-toggle-right"
+        data-tooltip="收起工作台"
+        aria-label="收起工作台"
+        @click="showWorkbench = !showWorkbench"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m9 5.25 7.5 6.75L9 18.75" />
+        </svg>
+      </button>
+      <WorkbenchPanel
+        :tasks="taskBoard"
+        :running="running"
+        :can-run="canRun"
+        :progress-percent="progressPercent"
+        :completed-count="completedCount"
+        :event-log="eventLog"
+        :now-ts="nowTs"
+        @run="runAnalysis"
+        @replay="handleReplay"
+      />
+    </aside>
 
-        <ChatMessageList :messages="messages" :highlight-index="highlightedMessageIndex" />
+    <main class="dialog-pane">
+      <ChatMessageList :messages="messages" :highlight-index="highlightedMessageIndex" />
 
-        <StepWorkflowPanel
-          :active-step="activeStep"
-          :state="state"
-          :error-message="errorMessage"
-          @submit="submitValue"
-          @update-state="updateState"
-        />
-      </main>
-    </section>
-
-    <WorkbenchPanel
-      :tasks="taskBoard"
-      :running="running"
-      :can-run="canRun"
-      :progress-percent="progressPercent"
-      :completed-count="completedCount"
-      :event-log="eventLog"
-      :now-ts="nowTs"
-      @run="runAnalysis"
-      @replay="handleReplay"
-    />
+      <StepWorkflowPanel
+        :active-step="activeStep"
+        :state="state"
+        :error-message="errorMessage"
+        @submit="submitValue"
+        @update-state="updateState"
+      />
+    </main>
+    </div>
   </div>
 </template>

@@ -18,6 +18,19 @@ def new_conversation_id() -> str:
     return f"conv_{now}"
 
 
+def conversation_title_from_state(state: dict[str, Any]) -> str:
+    """侧边栏与会话标题：ticker + 空格 + analysis_date；缺一则尽量展示已有字段。"""
+    ticker = str(state.get("ticker") or "").strip()
+    analysis_date = str(state.get("analysis_date") or "").strip()
+    if ticker and analysis_date:
+        return f"{ticker} {analysis_date}"
+    if ticker:
+        return ticker
+    if analysis_date:
+        return analysis_date
+    return "New Conversation"
+
+
 def get_state(db: Session, conversation_id: str) -> dict[str, Any]:
     stmt = (
         select(Message)

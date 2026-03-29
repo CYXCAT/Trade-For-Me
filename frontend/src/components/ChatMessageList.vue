@@ -11,6 +11,18 @@ const containerRef = ref<HTMLElement | null>(null);
 
 function messageText(content: unknown): string {
   if (typeof content === "string") return content;
+  if (content && typeof content === "object" && !Array.isArray(content)) {
+    const rec = content as Record<string, unknown>;
+    if ("step_key" in rec && "value" in rec) {
+      const v = rec.value;
+      const valStr =
+        v !== null && typeof v === "object" ? JSON.stringify(v) : String(v ?? "");
+      return `【${String(rec.step_key)}】${valStr}`;
+    }
+    if (typeof rec.final_prompt === "string") {
+      return `分析请求：\n${rec.final_prompt}`;
+    }
+  }
   try {
     return JSON.stringify(content, null, 2);
   } catch {
@@ -43,10 +55,8 @@ watch(
       :class="msg.role"
       :data-message-index="idx"
     >
-      <div class="avatar">{{ msg.role === "assistant" ? "AI" : msg.role === "user" ? "U" : "SYS" }}</div>
       <div class="bubble">
-        <div class="role">{{ msg.role }}</div>
-        <pre class="content">{{ messageText(msg.content) }}</pre>
+        <div class="content">{{ messageText(msg.content) }}</div>
       </div>
     </div>
   </section>
@@ -58,21 +68,67 @@ watch(
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  border: 1px solid #e1e8ff;
-  border-radius: 14px;
-  padding: 12px;
-  background: #ffffff;
+  border: 0;
+  border-radius: 0;
+  padding: 4px 0;
+  background: transparent;
 }
-.message-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; border-radius: 10px; transition: background-color .2s ease; }
+.message-row { display: flex; margin-bottom: 10px; border-radius: 10px; transition: background-color .2s ease; }
 .message-row.flash { background: rgba(121, 155, 255, 0.12); }
-.avatar { width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
-.message-row.assistant .avatar { background: linear-gradient(135deg, #315efb, #7fa1ff); }
-.message-row.user .avatar { background: linear-gradient(135deg, #16a34a, #34d399); }
-.message-row.system .avatar, .message-row.tool .avatar { background: linear-gradient(135deg, #64748b, #94a3b8); }
-.bubble { border: 1px solid #e2e8ff; border-radius: 12px; background: #f8faff; padding: 8px 10px; min-width: 0; max-width: min(900px, 100%); }
-.message-row.user .bubble { background: #f0fff4; border-color: #c8f0d6; }
-.role { font-size: 11px; font-weight: 700; color: #5b6f9a; text-transform: uppercase; letter-spacing: 0.04em; }
-.content { margin: 4px 0 0; white-space: pre-wrap; word-break: break-word; color: #1d2b4f; font-size: 13px; line-height: 1.45; }
+.message-row .bubble { min-width: 0; max-width: min(900px, 100%); border-radius: 12px; padding: 8px 10px; }
+.message-row.assistant,
+.message-row.system,
+.message-row.tool {
+  justify-content: flex-start;
+}
+.message-row.assistant .bubble,
+.message-row.system .bubble,
+.message-row.tool .bubble {
+  border: 0;
+  background: transparent;
+  padding-left: 0;
+}
+.message-row.user {
+  justify-content: flex-end;
+}
+.message-row.user .bubble {
+  border: 1px solid #c8d8ff;
+  background: linear-gradient(180deg, #f7faff, #eef3ff);
+}
+/* 用户气泡：略紧凑 */
+.content {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #1d2b4f;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* 模型/助手：参考 ChatGPT 网页——ui-sans-serif 栈、略大字号、舒适行高 */
+.message-row.assistant .content,
+.message-row.system .content,
+.message-row.tool .content {
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    "Noto Sans",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+  font-size: 15px;
+  line-height: 1.58;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: #353740;
+}
 
 .messages::-webkit-scrollbar {
   width: 10px;
@@ -86,9 +142,14 @@ watch(
 }
 
 @media (max-width: 900px) {
-  .messages { padding: 8px; }
-  .avatar { width: 26px; height: 26px; border-radius: 8px; }
+  .messages { padding: 4px 0; }
   .bubble { padding: 8px; }
   .content { font-size: 12px; }
+  .message-row.assistant .content,
+  .message-row.system .content,
+  .message-row.tool .content {
+    font-size: 14px;
+    line-height: 1.55;
+  }
 }
 </style>

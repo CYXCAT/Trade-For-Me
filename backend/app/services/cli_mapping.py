@@ -181,3 +181,60 @@ def build_workflow_steps(provider: str | None = None) -> list[WorkflowStep]:
         )
     )
     return steps
+
+
+def _option_label_for_step(step: WorkflowStep | None, value: object) -> str:
+    if not step:
+        return str(value)
+    for o in step.options:
+        if o.value == value or str(o.value) == str(value):
+            return o.label
+    return str(value)
+
+
+def format_step_value_for_chat(step_key: str, value: object, provider: str | None, steps: list[WorkflowStep]) -> str:
+    """将某一步的规范化取值转为对话中展示的纯文本。"""
+    by_key = {s.key: s for s in steps}
+    step = by_key.get(step_key)
+
+    if step_key == "analysts":
+        if not isinstance(value, list):
+            return str(value)
+        m = {str(o.value): o.label for o in ANALYST_OPTIONS}
+        return "、".join(m.get(str(v), str(v)) for v in value)
+
+    if step_key == "supplemental_prompt":
+        s = str(value or "").strip()
+        return s if s else "（无额外说明）"
+
+    if step_key in (
+        "research_depth",
+        "llm_provider",
+        "google_thinking_level",
+        "openai_reasoning_effort",
+        "anthropic_effort",
+    ):
+        return _option_label_for_step(step, value)
+
+    return str(value)
+
+
+def workflow_step_chat_pair(
+    step_key: str, normalized: object, provider: str | None
+) -> tuple[str, str] | None:
+    """
+    用户完成某步后写入对话：左侧为步骤标题与说明（assistant），右侧为纯文本选择（user）。
+    跳过补充说明时不写入。
+    """
+    if step_key == "supplemental_prompt" and normalized in (None, "", []):
+        return None
+
+    steps = build_workflow_steps(provider=provider)
+    by_key = {s.key: s for s in steps}
+    step = by_key.get(step_key)
+    if not step:
+        return None
+
+    assistant_text = f"{step.title}\n\n{step.prompt}"
+    user_text = format_step_value_for_chat(step_key, normalized, provider, steps)
+    return assistant_text, user_text
