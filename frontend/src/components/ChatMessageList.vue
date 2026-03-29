@@ -64,9 +64,6 @@ watch(
 
 <style scoped>
 .messages {
-  height: 100%;
-  min-height: 0;
-  overflow-y: auto;
   overflow-x: hidden;
   border: 0;
   border-radius: 0;
@@ -128,17 +125,6 @@ watch(
   font-weight: 400;
   letter-spacing: 0.01em;
   color: #353740;
-}
-
-.messages::-webkit-scrollbar {
-  width: 10px;
-}
-.messages::-webkit-scrollbar-thumb {
-  background: #c8d5ff;
-  border-radius: 999px;
-}
-.messages::-webkit-scrollbar-track {
-  background: transparent;
 }
 
 @media (max-width: 900px) {

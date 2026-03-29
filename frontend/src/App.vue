@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { createConversation, getMessages, getWorkflow, listConversations, streamRun, submitStep } from "./api";
 import type { ConversationSummary, Message, WorkflowStep } from "./types";
 import type { AgentStatus, AgentTask } from "./workbenchTypes";
@@ -22,7 +22,49 @@ const highlightedMessageIndex = ref<number | null>(null);
 const taskBoard = ref<AgentTask[]>([]);
 const showSidebar = ref(true);
 const showWorkbench = ref(true);
+const showDialogScrollbar = ref(false);
 let timer: number | undefined;
+let dialogScrollbarHideTimer: number | undefined;
+let dialogScrollbarShowDelayTimer: number | undefined;
+
+/** 对话区滚动条：持续滚动超过该时间后才显示，避免轻微误触 */
+const DIALOG_SCROLLBAR_SHOW_AFTER_MS = 200;
+/** 停止滚动后多久隐藏 */
+const DIALOG_SCROLLBAR_HIDE_AFTER_MS = 1200;
+
+function onDialogPaneScroll() {
+  if (dialogScrollbarHideTimer) window.clearTimeout(dialogScrollbarHideTimer);
+  dialogScrollbarHideTimer = window.setTimeout(() => {
+    showDialogScrollbar.value = false;
+    if (dialogScrollbarShowDelayTimer) {
+      window.clearTimeout(dialogScrollbarShowDelayTimer);
+      dialogScrollbarShowDelayTimer = undefined;
+    }
+    dialogScrollbarHideTimer = undefined;
+  }, DIALOG_SCROLLBAR_HIDE_AFTER_MS);
+
+  if (!showDialogScrollbar.value && !dialogScrollbarShowDelayTimer) {
+    dialogScrollbarShowDelayTimer = window.setTimeout(() => {
+      showDialogScrollbar.value = true;
+      dialogScrollbarShowDelayTimer = undefined;
+    }, DIALOG_SCROLLBAR_SHOW_AFTER_MS);
+  }
+}
+
+/** 仅展开一侧：展开工作台时收起历史；展开历史时收起工作台 */
+watch(showWorkbench, (open) => {
+  if (open) showSidebar.value = false;
+});
+watch(showSidebar, (open) => {
+  if (open) showWorkbench.value = false;
+});
+
+/** 中间列宽度不变，仅通过 margin 左右平移以避开展开的侧栏 */
+const dialogPaneLayoutClass = computed(() => {
+  if (showSidebar.value && !showWorkbench.value) return "dialog-pane--history-open";
+  if (showWorkbench.value && !showSidebar.value) return "dialog-pane--workbench-open";
+  return "";
+});
 
 const analystMapping: Record<string, string> = { market: "Market Analyst", social: "Social Analyst", news: "News Analyst", fundamentals: "Fundamentals Analyst" };
 const fixedAgents: AgentTask[] = [
@@ -218,6 +260,8 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (timer) window.clearInterval(timer);
+  if (dialogScrollbarHideTimer) window.clearTimeout(dialogScrollbarHideTimer);
+  if (dialogScrollbarShowDelayTimer) window.clearTimeout(dialogScrollbarShowDelayTimer);
 });
 </script>
 
@@ -334,16 +378,22 @@ onUnmounted(() => {
       />
     </aside>
 
-    <main class="dialog-pane">
-      <ChatMessageList :messages="messages" :highlight-index="highlightedMessageIndex" />
+    <main class="dialog-pane" :class="dialogPaneLayoutClass">
+      <div
+        class="dialog-pane-scroll"
+        :class="{ 'dialog-pane-scroll--show-scrollbar': showDialogScrollbar }"
+        @scroll.passive="onDialogPaneScroll"
+      >
+        <ChatMessageList :messages="messages" :highlight-index="highlightedMessageIndex" />
 
-      <StepWorkflowPanel
-        :active-step="activeStep"
-        :state="state"
-        :error-message="errorMessage"
-        @submit="submitValue"
-        @update-state="updateState"
-      />
+        <StepWorkflowPanel
+          :active-step="activeStep"
+          :state="state"
+          :error-message="errorMessage"
+          @submit="submitValue"
+          @update-state="updateState"
+        />
+      </div>
     </main>
     </div>
   </div>

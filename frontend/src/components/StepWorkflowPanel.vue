@@ -53,10 +53,10 @@ function toggleAnalyst(value: string) {
     </div>
     <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
 
-    <div class="option-grid" v-if="activeStep.kind === 'choice_or_input'">
-      <button class="option-card" @click="chooseTickerPreset('SPY')">SPY（默认）</button>
-      <button class="option-card" @click="customTickerMode = true">自定义</button>
-      <div v-if="customTickerMode">
+    <div class="option-grid option-grid-flow" v-if="activeStep.kind === 'choice_or_input'">
+      <button type="button" class="option-card" @click="chooseTickerPreset('SPY')">SPY（默认）</button>
+      <button type="button" class="option-card" @click="customTickerMode = true">自定义</button>
+      <div v-if="customTickerMode" class="option-grid-span">
         <input
           :value="String(state.ticker || '')"
           @input="emit('updateState', 'ticker', ($event.target as HTMLInputElement).value)"
@@ -70,17 +70,17 @@ function toggleAnalyst(value: string) {
       </div>
     </div>
 
-    <div class="option-grid" v-else-if="activeStep.kind === 'single_select' || activeStep.kind === 'single_select_or_custom'">
-      <button class="option-card" v-for="op in activeStep.options" :key="String(op.value)" @click="submit(activeStep.key, op.value)">
+    <div class="option-grid option-grid-flow" v-else-if="activeStep.kind === 'single_select' || activeStep.kind === 'single_select_or_custom'">
+      <button type="button" class="option-card" v-for="op in activeStep.options" :key="String(op.value)" @click="submit(activeStep.key, op.value)">
         {{ op.label }}
       </button>
-      <div class="custom-block" v-if="activeStep.kind === 'single_select_or_custom'">
+      <div class="custom-block option-grid-span" v-if="activeStep.kind === 'single_select_or_custom'">
         <input v-model="customInput" placeholder="或输入自定义 model id" />
         <button class="submit-btn" :disabled="!customInput.trim()" @click="submit(activeStep.key, customInput)">提交自定义模型</button>
       </div>
     </div>
 
-    <div class="option-grid" v-else-if="activeStep.kind === 'multi_select'">
+    <div class="option-grid option-grid-stack" v-else-if="activeStep.kind === 'multi_select'">
       <div class="multi">
         <button
           type="button"
@@ -94,7 +94,7 @@ function toggleAnalyst(value: string) {
       <button class="submit-btn" :disabled="selectedAnalysts.length === 0" @click="submit(activeStep.key, selectedAnalysts)">提交分析师选择</button>
     </div>
 
-    <div class="option-grid" v-else-if="activeStep.kind === 'date_input' || activeStep.kind === 'optional_text'">
+    <div class="option-grid option-grid-stack" v-else-if="activeStep.kind === 'date_input' || activeStep.kind === 'optional_text'">
       <input
         :type="activeStep.kind === 'date_input' ? 'date' : 'text'"
         v-model="customInput"
@@ -113,38 +113,132 @@ function toggleAnalyst(value: string) {
 </template>
 
 <style scoped>
-.step-panel { border: 1px solid #dfe7ff; border-radius: 14px; padding: 12px; background: linear-gradient(180deg, #ffffff, #f8faff); }
+.step-panel {
+  width: 100%;
+  max-width: min(900px, 100%);
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid #dfe7ff;
+  border-radius: 14px;
+  padding: 12px;
+  background: linear-gradient(180deg, #ffffff, #f8faff);
+  overflow-x: hidden;
+}
 .step-header h3 { margin: 0; color: #20408f; }
-.step-header p { margin: 4px 0 0; color: #6e81ae; font-size: 13px; }
-.option-grid { margin-top: 10px; }
-.option-card { border: 1px solid #d8e3ff; background: #fff; color: #1f3b8a; border-radius: 12px; padding: 10px 12px; margin-right: 8px; margin-bottom: 8px; cursor: pointer; transition: 0.15s ease; }
+.step-header p {
+  margin: 4px 0 0;
+  color: #6e81ae;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* 横向自动换行：所有带选项的 step 同一套，不挤出容器 */
+.option-grid-flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 10px;
+  align-items: stretch;
+}
+.option-grid-flow .option-grid-span {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.option-grid-span .submit-btn,
+.option-grid-span .ghost-btn {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* 纵向表单类 step */
+.option-grid-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 10px;
+}
+.option-grid-stack .multi {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.option-card {
+  border: 1px solid #d8e3ff;
+  background: #fff;
+  color: #1f3b8a;
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: 0.15s ease;
+  text-align: left;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 .option-card:hover { border-color: #6f8bff; box-shadow: 0 5px 18px rgba(83, 113, 255, 0.18); }
 .option-card.selected { border-color: #3f6dff; background: #eef3ff; }
-.submit-btn,.ghost-btn { border: 0; border-radius: 10px; padding: 9px 12px; cursor: pointer; margin-right: 8px; font-family: inherit; }
+.submit-btn,
+.ghost-btn {
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 .submit-btn { color: #fff; background: linear-gradient(135deg, #3f6dff, #7a95ff); }
 .ghost-btn { color: #315efb; background: #edf2ff; }
-.actions { margin-top: 8px; }
-input { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #cfdbff; background: #fff; color: #1f3b8a; margin-bottom: 8px; outline: none; }
+.option-grid-stack .submit-btn,
+.option-grid-stack .ghost-btn {
+  width: 100%;
+}
+.actions {
+  margin-top: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #cfdbff;
+  background: #fff;
+  color: #1f3b8a;
+  outline: none;
+  min-width: 0;
+}
 input:focus { border-color: #6d8cff; box-shadow: 0 0 0 3px rgba(109, 140, 255, 0.16); }
+.custom-block { min-width: 0; width: 100%; }
 .error { color: #b91c1c; margin: 6px 0 10px; font-size: 13px; }
 
 @media (max-width: 900px) {
   .step-panel { padding: 10px; }
   .step-header h3 { font-size: 16px; }
-  .option-card {
-    width: 100%;
-    margin-right: 0;
-    text-align: left;
-  }
-  .submit-btn,
-  .ghost-btn {
-    width: 100%;
-    margin: 0 0 8px;
+  .option-grid-flow {
+    grid-template-columns: 1fr;
   }
   .actions {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .actions .submit-btn,
+  .actions .ghost-btn {
+    width: 100%;
   }
 }
 </style>
