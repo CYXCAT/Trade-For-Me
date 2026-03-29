@@ -14,6 +14,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   run: [];
+  replay: [messageIndex: number];
 }>();
 
 const groupedTasks = computed(() => {
@@ -97,7 +98,11 @@ function taskDuration(t: AgentTask): string {
         <span class="dot" :class="task.status"></span>
         <div class="timeline-main">
           <div class="timeline-top">
-            <span class="task-name">{{ task.name }}</span>
+            <button
+              class="task-name replay-btn"
+              :disabled="typeof task.lastMessageIndex !== 'number'"
+              @click="typeof task.lastMessageIndex === 'number' && emit('replay', task.lastMessageIndex)"
+            >{{ task.name }}</button>
             <span class="task-status" :class="task.status">{{ task.status }}</span>
           </div>
           <div class="timeline-meta">{{ task.group }} · {{ taskDuration(task) }}</div>
@@ -119,9 +124,11 @@ function taskDuration(t: AgentTask): string {
 <style scoped>
 .workbench {
   display: grid;
-  grid-template-rows: auto auto auto 1fr auto;
+  grid-template-rows: auto auto auto minmax(0, 1fr) minmax(0, 0.8fr);
   gap: 12px;
+  height: 100%;
   min-width: 0;
+  min-height: 0;
   background: #fbfdff;
   border: 1px solid #d8e2ff;
   border-radius: 18px;
@@ -142,7 +149,7 @@ function taskDuration(t: AgentTask): string {
 .stage-card h3,.timeline-card h3,.event-card h3{margin:0 0 8px;font-size:13px;color:#35529e}
 .stage-row{display:flex;justify-content:space-between;padding:5px 0;border-top:1px dashed #edf1ff}
 .stage-row:first-of-type{border-top:0}
-.timeline-card{max-height:300px;overflow:auto}
+.timeline-card{min-height:0;overflow:auto}
 .timeline-item{display:flex;gap:8px;padding:8px 0;border-top:1px dashed #edf1ff}
 .timeline-item:first-of-type{border-top:0}
 .dot{width:10px;height:10px;border-radius:999px;margin-top:4px;background:#94a3b8;flex-shrink:0}
@@ -151,6 +158,8 @@ function taskDuration(t: AgentTask): string {
 .timeline-main{min-width:0;flex:1}
 .timeline-top{display:flex;justify-content:space-between;gap:8px}
 .task-name{font-size:13px;color:#1f3b8a;font-weight:600}
+.replay-btn{background:transparent;border:0;padding:0;cursor:pointer;text-align:left;font:inherit;color:#1f3b8a}
+.replay-btn:disabled{opacity:.45;cursor:not-allowed}
 .task-status{font-size:11px;border-radius:999px;padding:2px 8px;text-transform:uppercase}
 .task-status.pending{background:#eef2f7;color:#64748b}
 .task-status.in_progress{background:#e7efff;color:#1d4ed8}
@@ -159,7 +168,52 @@ function taskDuration(t: AgentTask): string {
 .log-fold{margin-top:6px}
 .log-fold summary{font-size:12px;color:#315efb;cursor:pointer}
 .log-item{font-size:12px;color:#5f7098;border-left:2px solid #e6edff;padding-left:6px;margin-top:4px}
-.event-card{max-height:160px;overflow:auto}
+.event-card{min-height:0;overflow:auto}
 .event-item{font-size:12px;color:#5f7098;padding:4px 0;border-top:1px dashed #edf1ff}
 .event-item:first-of-type{border-top:0}
+
+.workbench::-webkit-scrollbar,
+.timeline-card::-webkit-scrollbar,
+.event-card::-webkit-scrollbar {
+  width: 10px;
+}
+.workbench::-webkit-scrollbar-thumb,
+.timeline-card::-webkit-scrollbar-thumb,
+.event-card::-webkit-scrollbar-thumb {
+  background: #c8d5ff;
+  border-radius: 999px;
+}
+.workbench::-webkit-scrollbar-track,
+.timeline-card::-webkit-scrollbar-track,
+.event-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (max-width: 1200px) {
+  .workbench {
+    grid-template-rows: auto auto auto minmax(0, 1fr) minmax(0, 0.8fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .workbench {
+    padding: 10px;
+    border-radius: 14px;
+  }
+  .workbench-header h2 {
+    font-size: 18px;
+  }
+  .progress-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .run-pill {
+    width: 100%;
+  }
+  .workbench {
+    height: auto;
+    min-height: 320px;
+  }
+}
 </style>

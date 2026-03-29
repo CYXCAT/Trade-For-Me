@@ -71,6 +71,7 @@ let __VLS_directives;
 /** @type {__VLS_StyleScopedClasses['timeline-item']} */ ;
 /** @type {__VLS_StyleScopedClasses['dot']} */ ;
 /** @type {__VLS_StyleScopedClasses['dot']} */ ;
+/** @type {__VLS_StyleScopedClasses['replay-btn']} */ ;
 /** @type {__VLS_StyleScopedClasses['task-status']} */ ;
 /** @type {__VLS_StyleScopedClasses['task-status']} */ ;
 /** @type {__VLS_StyleScopedClasses['in_progress']} */ ;
@@ -79,6 +80,21 @@ let __VLS_directives;
 /** @type {__VLS_StyleScopedClasses['log-fold']} */ ;
 /** @type {__VLS_StyleScopedClasses['event-card']} */ ;
 /** @type {__VLS_StyleScopedClasses['event-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['workbench']} */ ;
+/** @type {__VLS_StyleScopedClasses['timeline-card']} */ ;
+/** @type {__VLS_StyleScopedClasses['event-card']} */ ;
+/** @type {__VLS_StyleScopedClasses['workbench']} */ ;
+/** @type {__VLS_StyleScopedClasses['timeline-card']} */ ;
+/** @type {__VLS_StyleScopedClasses['event-card']} */ ;
+/** @type {__VLS_StyleScopedClasses['workbench']} */ ;
+/** @type {__VLS_StyleScopedClasses['timeline-card']} */ ;
+/** @type {__VLS_StyleScopedClasses['event-card']} */ ;
+/** @type {__VLS_StyleScopedClasses['workbench']} */ ;
+/** @type {__VLS_StyleScopedClasses['workbench']} */ ;
+/** @type {__VLS_StyleScopedClasses['workbench-header']} */ ;
+/** @type {__VLS_StyleScopedClasses['progress-title']} */ ;
+/** @type {__VLS_StyleScopedClasses['run-pill']} */ ;
+/** @type {__VLS_StyleScopedClasses['workbench']} */ ;
 __VLS_asFunctionalElement1(__VLS_intrinsics.section, __VLS_intrinsics.section)({
     ...{ class: "workbench" },
 });
@@ -164,10 +180,17 @@ for (const [task] of __VLS_vFor((__VLS_ctx.timelineTasks))) {
         ...{ class: "timeline-top" },
     });
     /** @type {__VLS_StyleScopedClasses['timeline-top']} */ ;
-    __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
-        ...{ class: "task-name" },
+    __VLS_asFunctionalElement1(__VLS_intrinsics.button, __VLS_intrinsics.button)({
+        ...{ onClick: (...[$event]) => {
+                typeof task.lastMessageIndex === 'number' && __VLS_ctx.emit('replay', task.lastMessageIndex);
+                // @ts-ignore
+                [emit, timelineTasks,];
+            } },
+        ...{ class: "task-name replay-btn" },
+        disabled: (typeof task.lastMessageIndex !== 'number'),
     });
     /** @type {__VLS_StyleScopedClasses['task-name']} */ ;
+    /** @type {__VLS_StyleScopedClasses['replay-btn']} */ ;
     (task.name);
     __VLS_asFunctionalElement1(__VLS_intrinsics.span, __VLS_intrinsics.span)({
         ...{ class: "task-status" },
@@ -196,7 +219,7 @@ for (const [task] of __VLS_vFor((__VLS_ctx.timelineTasks))) {
             /** @type {__VLS_StyleScopedClasses['log-item']} */ ;
             (log);
             // @ts-ignore
-            [timelineTasks, taskDuration,];
+            [taskDuration,];
         }
     }
     // @ts-ignore

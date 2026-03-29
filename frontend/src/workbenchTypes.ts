@@ -7,5 +7,6 @@ export type AgentTask = {
   status: AgentStatus;
   startedAt?: number;
   endedAt?: number;
+  lastMessageIndex?: number;
   logs: string[];
 };

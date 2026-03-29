@@ -1,1 +1,1 @@
-{"root":["./src/api.ts","./src/main.ts","./src/types.ts","./src/workbenchTypes.ts","./src/App.vue","./src/components/WorkbenchPanel.vue"],"version":"5.9.3"}
+{"root":["./src/api.ts","./src/main.ts","./src/types.ts","./src/workbenchTypes.ts","./src/App.vue","./src/components/ChatMessageList.vue","./src/components/ConversationSidebar.vue","./src/components/StepWorkflowPanel.vue","./src/components/WorkbenchPanel.vue"],"version":"5.9.3"}
